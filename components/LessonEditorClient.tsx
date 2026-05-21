@@ -223,6 +223,10 @@ export default function LessonEditorClient({ id }: { id: string }) {
     return report.errors.filter((e) => e.itemId === itemId);
   };
 
+  const getWarningsForItem = (itemId: string) => {
+    return report.warnings.filter((e) => e.itemId === itemId);
+  };
+
   const getLessonErrors = () => {
     return report.errors.filter((e) => e.lessonId === lesson.id && !e.itemId);
   };
@@ -401,11 +405,12 @@ export default function LessonEditorClient({ id }: { id: string }) {
           <div className="space-y-4">
             {filteredWords.map((word, idx) => {
               const rowErrs = getErrorsForItem(word.id);
+              const rowWarns = getWarningsForItem(word.id);
               return (
                 <div
                   id={word.id}
                   key={idx}
-                  className={`border rounded-md overflow-hidden scroll-mt-24 ${rowErrs.length > 0 ? "border-red-400 shadow-[0_0_0_1px_rgba(248,113,113,0.5)]" : "border-slate-200"}`}
+                  className={`border rounded-md overflow-hidden scroll-mt-24 ${rowErrs.length > 0 ? "border-red-400 shadow-[0_0_0_1px_rgba(248,113,113,0.5)]" : rowWarns.length > 0 ? "border-amber-400 shadow-[0_0_0_1px_rgba(251,191,36,0.5)]" : "border-slate-200"}`}
                 >
                   <div className="bg-slate-50 border-b border-slate-200 p-2 flex items-center justify-between">
                     <div className="text-[12px] font-mono text-slate-500">
@@ -572,6 +577,26 @@ export default function LessonEditorClient({ id }: { id: string }) {
                         )}
                     </div>
                   </div>
+                  {rowErrs.length > 0 && (
+                    <div className="bg-red-50 p-2 text-red-700 text-[12px] border-t border-red-100 flex flex-col gap-1">
+                      {rowErrs.map((err, i) => (
+                        <div key={i} className="flex items-start gap-1">
+                          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                          <span>{err.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {rowWarns.length > 0 && (
+                    <div className="bg-amber-50 p-2 text-amber-700 text-[12px] border-t border-amber-100 flex flex-col gap-1">
+                      {rowWarns.map((err, i) => (
+                        <div key={i} className="flex items-start gap-1">
+                          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                          <span>{err.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -595,11 +620,12 @@ export default function LessonEditorClient({ id }: { id: string }) {
           <div className="space-y-4">
             {filteredPhrases.map((phrase, idx) => {
               const rowErrs = getErrorsForItem(phrase.id);
+              const rowWarns = getWarningsForItem(phrase.id);
               return (
                 <div
                   id={phrase.id}
                   key={idx}
-                  className={`bg-slate-50 p-3 rounded border-l-4 scroll-mt-24 ${rowErrs.length > 0 ? "border-l-red-500 shadow-[0_0_0_1px_rgba(248,113,113,0.5)] border-y-red-200 border-r-red-200" : "border-l-blue-500 border border-y-slate-200 border-r-slate-200"}`}
+                  className={`bg-slate-50 p-3 rounded border-l-4 scroll-mt-24 ${rowErrs.length > 0 ? "border-l-red-500 shadow-[0_0_0_1px_rgba(248,113,113,0.5)] border-y-red-200 border-r-red-200" : rowWarns.length > 0 ? "border-l-amber-500 shadow-[0_0_0_1px_rgba(251,191,36,0.5)] border-y-amber-200 border-r-amber-200" : "border-l-blue-500 border border-y-slate-200 border-r-slate-200"}`}
                 >
                   <div className="flex justify-between items-start">
                     <input
@@ -768,6 +794,26 @@ export default function LessonEditorClient({ id }: { id: string }) {
                         )}
                     </div>
                   </div>
+                  {rowErrs.length > 0 && (
+                    <div className="bg-red-50 p-2 text-red-700 text-[12px] border-t border-red-200 flex flex-col gap-1 -m-3 mt-3">
+                      {rowErrs.map((err, i) => (
+                        <div key={i} className="flex items-start gap-1">
+                          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                          <span>{err.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {rowWarns.length > 0 && (
+                    <div className="bg-amber-50 p-2 text-amber-700 text-[12px] border-t border-amber-200 flex flex-col gap-1 -m-3 mt-3">
+                      {rowWarns.map((err, i) => (
+                        <div key={i} className="flex items-start gap-1">
+                          <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                          <span>{err.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
