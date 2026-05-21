@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   GripVertical,
   AlertCircle,
+  MoveRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,10 +16,15 @@ import { useState, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function LessonEditorClient({ id }: { id: string }) {
-  const { course, updateLesson, report } = useCourse();
+  const { course, updateLesson, report, moveItem } = useCourse();
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [movingItemId, setMovingItemId] = useState<string | null>(null);
+  const [movingItemType, setMovingItemType] = useState<
+    "word" | "phrase" | null
+  >(null);
+  const [moveTargetLessonId, setMoveTargetLessonId] = useState<string>("");
 
   const lesson = useMemo(
     () => course.lessons.find((l) => l.id === id) || null,
@@ -204,6 +210,14 @@ export default function LessonEditorClient({ id }: { id: string }) {
     );
   };
 
+  const handleMoveItemConfirm = () => {
+    if (!movingItemId || !movingItemType || !moveTargetLessonId) return;
+    moveItem(lesson.id, moveTargetLessonId, movingItemId, movingItemType);
+    setMovingItemId(null);
+    setMovingItemType(null);
+    setMoveTargetLessonId("");
+  };
+
   // --- Error lookups ---
   const getErrorsForItem = (itemId: string) => {
     return report.errors.filter((e) => e.itemId === itemId);
@@ -213,7 +227,66 @@ export default function LessonEditorClient({ id }: { id: string }) {
     return report.errors.filter((e) => e.lessonId === lesson.id && !e.itemId);
   };
 
+  const getMoveWarning = () => {
+    if (!movingItemId || !movingItemType || !moveTargetLessonId) return null;
+
+    const targetLessonIndex = course.lessons.findIndex(
+      (l) => l.id === moveTargetLessonId,
+    );
+    if (targetLessonIndex === -1) return null;
+
+    if (movingItemType === "word") {
+      const phrasesUsingWord: { phraseId: string; lessonTitle: string }[] = [];
+      course.lessons.forEach((l, idx) => {
+        if (idx < targetLessonIndex) {
+          l.phrases.forEach((p) => {
+            if (p.components.includes(movingItemId)) {
+              phrasesUsingWord.push({
+                phraseId: p.th || p.id,
+                lessonTitle: l.title || l.id,
+              });
+            }
+          });
+        }
+      });
+
+      if (phrasesUsingWord.length > 0) {
+        return `Attention : Ce mot est utilisé dans des phrases de leçons antérieures à la cible : ${phrasesUsingWord.map((p) => `"${p.phraseId}" dans ${p.lessonTitle}`).join(", ")}. Cela provoquera des erreurs.`;
+      }
+    } else if (movingItemType === "phrase") {
+      const movingPhrase = lesson.phrases.find((p) => p.id === movingItemId);
+      if (!movingPhrase) return null;
+
+      const wordsFromFutureLessons: {
+        wordId: string;
+        wordTh: string;
+        lessonTitle: string;
+      }[] = [];
+      movingPhrase.components.forEach((compId) => {
+        course.lessons.forEach((l, idx) => {
+          if (idx > targetLessonIndex) {
+            const word = l.words.find((w) => w.id === compId);
+            if (word) {
+              wordsFromFutureLessons.push({
+                wordId: compId,
+                wordTh: word.th || word.id,
+                lessonTitle: l.title || l.id,
+              });
+            }
+          }
+        });
+      });
+
+      if (wordsFromFutureLessons.length > 0) {
+        return `Attention : Cette phrase utilise des mots définis dans des leçons ultérieures à la cible : ${wordsFromFutureLessons.map((w) => `"${w.wordTh}" dans ${w.lessonTitle}`).join(", ")}. Cela provoquera des erreurs.`;
+      }
+    }
+
+    return null;
+  };
+
   const lessonErrors = getLessonErrors();
+  const moveWarning = getMoveWarning();
 
   return (
     <div className="pb-32 max-w-5xl mx-auto w-full">
@@ -338,12 +411,83 @@ export default function LessonEditorClient({ id }: { id: string }) {
                     <div className="text-[12px] font-mono text-slate-500">
                       Mot #{idx + 1}
                     </div>
-                    <button
-                      onClick={() => handleRemoveWord(word.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {movingItemId === word.id && movingItemType === "word" ? (
+                        <div className="flex flex-col items-end gap-1 relative z-10 w-full max-w-[300px]">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={moveTargetLessonId}
+                              onChange={(e) =>
+                                setMoveTargetLessonId(e.target.value)
+                              }
+                              className="text-[12px] border border-slate-300 rounded px-2 py-1 outline-none text-slate-700 bg-white"
+                            >
+                              <option value="" disabled>
+                                Choisir une leçon...
+                              </option>
+                              {course.lessons
+                                .filter((l) => l.id !== lesson.id)
+                                .map((l) => (
+                                  <option key={l.id} value={l.id}>
+                                    {l.title || l.id}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              onClick={handleMoveItemConfirm}
+                              disabled={!moveTargetLessonId}
+                              className="text-[12px] bg-blue-500 text-white px-2 py-1 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Valider
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMovingItemId(null);
+                                setMovingItemType(null);
+                                setMoveTargetLessonId("");
+                              }}
+                              className="text-[12px] text-slate-500 hover:text-slate-700 px-2 py-1"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                          {moveWarning && (
+                            <div className="text-[11px] text-amber-700 bg-amber-50 px-2 py-1.5 rounded border border-amber-200 mt-1 max-w-[300px] text-right shadow-sm absolute top-[100%] right-0">
+                              <AlertCircle
+                                size={12}
+                                className="inline mr-1 -mt-0.5"
+                              />
+                              {moveWarning}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setMovingItemId(word.id);
+                            setMovingItemType("word");
+                            setMoveTargetLessonId("");
+                          }}
+                          className="text-slate-400 hover:text-blue-500 flex items-center gap-1.5 px-2 py-1 transition-colors group"
+                          title="Déplacer"
+                        >
+                          <MoveRight size={14} />
+                          <span className="text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                            Déplacer
+                          </span>
+                        </button>
+                      )}
+
+                      {movingItemId !== word.id && (
+                        <button
+                          onClick={() => handleRemoveWord(word.id)}
+                          className="text-red-400 hover:text-red-600 px-2 py-1 transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white">
                     <div className="space-y-1">
@@ -457,7 +601,7 @@ export default function LessonEditorClient({ id }: { id: string }) {
                   key={idx}
                   className={`bg-slate-50 p-3 rounded border-l-4 scroll-mt-24 ${rowErrs.length > 0 ? "border-l-red-500 shadow-[0_0_0_1px_rgba(248,113,113,0.5)] border-y-red-200 border-r-red-200" : "border-l-blue-500 border border-y-slate-200 border-r-slate-200"}`}
                 >
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-start">
                     <input
                       value={phrase.th}
                       placeholder="Thai"
@@ -466,12 +610,84 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       }
                       className="bg-transparent border-none outline-none text-[20px] text-blue-500 font-semibold w-full"
                     />
-                    <button
-                      onClick={() => handleRemovePhrase(phrase.id)}
-                      className="text-red-500 hover:text-red-700 ml-2"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      {movingItemId === phrase.id &&
+                      movingItemType === "phrase" ? (
+                        <div className="flex flex-col items-end gap-1 relative z-10 w-full max-w-[300px]">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={moveTargetLessonId}
+                              onChange={(e) =>
+                                setMoveTargetLessonId(e.target.value)
+                              }
+                              className="text-[12px] border border-slate-300 rounded px-2 py-1 outline-none text-slate-700 bg-white"
+                            >
+                              <option value="" disabled>
+                                Choisir une leçon...
+                              </option>
+                              {course.lessons
+                                .filter((l) => l.id !== lesson.id)
+                                .map((l) => (
+                                  <option key={l.id} value={l.id}>
+                                    {l.title || l.id}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              onClick={handleMoveItemConfirm}
+                              disabled={!moveTargetLessonId}
+                              className="text-[12px] bg-blue-500 text-white px-2 py-1 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Valider
+                            </button>
+                            <button
+                              onClick={() => {
+                                setMovingItemId(null);
+                                setMovingItemType(null);
+                                setMoveTargetLessonId("");
+                              }}
+                              className="text-[12px] text-slate-500 hover:text-slate-700 px-2 py-1"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                          {moveWarning && (
+                            <div className="text-[11px] text-amber-700 bg-amber-50 px-2 py-1.5 rounded border border-amber-200 mt-1 max-w-[300px] text-right shadow-sm absolute top-[100%] right-0">
+                              <AlertCircle
+                                size={12}
+                                className="inline mr-1 -mt-0.5"
+                              />
+                              {moveWarning}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setMovingItemId(phrase.id);
+                            setMovingItemType("phrase");
+                            setMoveTargetLessonId("");
+                          }}
+                          className="text-slate-400 hover:text-blue-500 flex items-center gap-1.5 px-2 py-1 transition-colors group"
+                          title="Déplacer"
+                        >
+                          <MoveRight size={14} />
+                          <span className="text-[11px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                            Déplacer
+                          </span>
+                        </button>
+                      )}
+
+                      {movingItemId !== phrase.id && (
+                        <button
+                          onClick={() => handleRemovePhrase(phrase.id)}
+                          className="text-red-400 hover:text-red-600 px-2 py-1 transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <input

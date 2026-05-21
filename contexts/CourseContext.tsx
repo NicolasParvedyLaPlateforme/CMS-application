@@ -30,6 +30,12 @@ interface CourseContextType {
   addLesson: (lesson: Lesson) => void;
   deleteLesson: (lessonId: string) => void;
   reorderLessons: (startIndex: number, endIndex: number) => void;
+  moveItem: (
+    sourceLessonId: string,
+    targetLessonId: string,
+    itemId: string,
+    itemType: "word" | "phrase",
+  ) => void;
   report: ValidationReport;
   exportCourse: () => void;
   resetCourse: () => void;
@@ -188,6 +194,61 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }, "Réorganisation des leçons");
   };
 
+  const moveItem = (
+    sourceLessonId: string,
+    targetLessonId: string,
+    itemId: string,
+    itemType: "word" | "phrase",
+  ) => {
+    dispatchCourseChange(
+      (prev) => {
+        const sourceLesson = prev.lessons.find((l) => l.id === sourceLessonId);
+        const targetLesson = prev.lessons.find((l) => l.id === targetLessonId);
+
+        if (!sourceLesson || !targetLesson) return prev;
+
+        const updatedLessons = [...prev.lessons];
+        const sourceIndex = updatedLessons.findIndex(
+          (l) => l.id === sourceLessonId,
+        );
+        const targetIndex = updatedLessons.findIndex(
+          (l) => l.id === targetLessonId,
+        );
+
+        const newSourceLesson = { ...sourceLesson };
+        const newTargetLesson = { ...targetLesson };
+
+        if (itemType === "word") {
+          const itemToMove = newSourceLesson.words.find((w) => w.id === itemId);
+          if (!itemToMove) return prev;
+
+          newSourceLesson.words = newSourceLesson.words.filter(
+            (w) => w.id !== itemId,
+          );
+          newTargetLesson.words = [...newTargetLesson.words, itemToMove];
+        } else {
+          const itemToMove = newSourceLesson.phrases.find(
+            (p) => p.id === itemId,
+          );
+          if (!itemToMove) return prev;
+
+          newSourceLesson.phrases = newSourceLesson.phrases.filter(
+            (p) => p.id !== itemId,
+          );
+          newTargetLesson.phrases = [...newTargetLesson.phrases, itemToMove];
+        }
+
+        updatedLessons[sourceIndex] = newSourceLesson;
+        updatedLessons[targetIndex] = newTargetLesson;
+
+        return { ...prev, lessons: updatedLessons };
+      },
+      `Déplacement d'un ${itemType === "word" ? "mot" : "phrase"} vers une autre leçon`,
+      targetLessonId,
+      itemId,
+    );
+  };
+
   const exportCourse = () => {
     const dataStr =
       "data:text/json;charset=utf-8," +
@@ -230,6 +291,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
         addLesson,
         deleteLesson,
         reorderLessons,
+        moveItem,
         report,
         exportCourse,
         resetCourse,
