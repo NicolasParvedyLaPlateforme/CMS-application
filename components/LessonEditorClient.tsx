@@ -582,7 +582,17 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       {rowErrs.map((err, i) => (
                         <div key={i} className="flex items-start gap-1">
                           <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                          <span>{err.message}</span>
+                          <span className="flex-1">
+                            {err.message}
+                            {err.actionUrl && (
+                              <Link
+                                href={err.actionUrl}
+                                className="font-semibold underline ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                Résoudre
+                              </Link>
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -592,7 +602,17 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       {rowWarns.map((err, i) => (
                         <div key={i} className="flex items-start gap-1">
                           <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                          <span>{err.message}</span>
+                          <span className="flex-1">
+                            {err.message}
+                            {err.actionUrl && (
+                              <Link
+                                href={err.actionUrl}
+                                className="font-semibold underline ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                Résoudre
+                              </Link>
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -799,7 +819,17 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       {rowErrs.map((err, i) => (
                         <div key={i} className="flex items-start gap-1">
                           <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                          <span>{err.message}</span>
+                          <span className="flex-1">
+                            {err.message}
+                            {err.actionUrl && (
+                              <Link
+                                href={err.actionUrl}
+                                className="font-semibold underline ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                Résoudre
+                              </Link>
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -809,7 +839,17 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       {rowWarns.map((err, i) => (
                         <div key={i} className="flex items-start gap-1">
                           <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                          <span>{err.message}</span>
+                          <span className="flex-1">
+                            {err.message}
+                            {err.actionUrl && (
+                              <Link
+                                href={err.actionUrl}
+                                className="font-semibold underline ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                Résoudre
+                              </Link>
+                            )}
+                          </span>
                         </div>
                       ))}
                     </div>

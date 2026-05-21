@@ -5,6 +5,7 @@ export function validateCourse(course: Course): ValidationReport {
   const warnings: ValidationErrorItem[] = [];
 
   const globalIds = new Set<string>();
+  const globalIdSource = new Map<string, string>(); // item.id -> lesson.id
   const definedWords = new Map<string, { lessonId: string; th: string }>();
   const chronologicalWords = new Map<string, Set<string>>(); // lessonId -> Set of available word IDs
   const usedWords = new Set<string>();
@@ -61,14 +62,18 @@ export function validateCourse(course: Course): ValidationReport {
     lesson.words.forEach((word) => {
       // Duplicate Word ID
       if (globalIds.has(word.id)) {
+        const existingLessonId = globalIdSource.get(word.id);
         errors.push({
           type: "error",
           message: `Word ID "${word.id}" is duplicated.`,
           lessonId: lesson.id,
           itemId: word.id,
+          actionUrl: `/resolve?type=word&id1=${word.id}&id2=${word.id}&l1=${existingLessonId}&l2=${lesson.id}`,
         });
+      } else {
+        globalIdSource.set(word.id, lesson.id);
+        globalIds.add(word.id);
       }
-      globalIds.add(word.id);
       definedWords.set(word.id, { lessonId: lesson.id, th: word.th });
       currentLessonWords.add(word.id);
       accumulativeWords.add(word.id);
@@ -183,14 +188,18 @@ export function validateCourse(course: Course): ValidationReport {
     lesson.phrases.forEach((phrase) => {
       // Duplicate Phrase ID
       if (globalIds.has(phrase.id)) {
+        const existingLessonId = globalIdSource.get(phrase.id);
         errors.push({
           type: "error",
           message: `Phrase ID "${phrase.id}" is duplicated.`,
           lessonId: lesson.id,
           itemId: phrase.id,
+          actionUrl: `/resolve?type=phrase&id1=${phrase.id}&id2=${phrase.id}&l1=${existingLessonId}&l2=${lesson.id}`,
         });
+      } else {
+        globalIdSource.set(phrase.id, lesson.id);
+        globalIds.add(phrase.id);
       }
-      globalIds.add(phrase.id);
 
       // Rule: Phonetic not empty
       if (!phrase.phonetic || phrase.phonetic.trim() === "") {
