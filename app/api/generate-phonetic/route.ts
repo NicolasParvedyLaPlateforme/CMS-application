@@ -42,10 +42,10 @@ Thai text: ${text}`,
     });
 
     return NextResponse.json({ phonetic: response.text?.trim() || "" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating phonetic:", error);
     return NextResponse.json(
-      { error: "Failed to generate phonetic" },
+      { error: error?.message || "Failed to generate phonetic" },
       { status: 500 },
     );
   }

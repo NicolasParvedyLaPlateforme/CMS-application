@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { ValidationPanel } from "@/components/ValidationPanel";
+import BatchPhoneticTool from "@/components/BatchPhoneticTool";
 
 export default function DashboardClient() {
   const {
@@ -194,6 +195,8 @@ export default function DashboardClient() {
           )}
         </div>
       </div>
+
+      <BatchPhoneticTool />
 
       <div className="xl:hidden">
         <h2 className="text-xl font-bold text-slate-900 tracking-tight mb-4">
