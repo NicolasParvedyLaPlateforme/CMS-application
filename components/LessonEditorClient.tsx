@@ -9,6 +9,8 @@ import {
   GripVertical,
   AlertCircle,
   MoveRight,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +27,36 @@ export default function LessonEditorClient({ id }: { id: string }) {
     "word" | "phrase" | null
   >(null);
   const [moveTargetLessonId, setMoveTargetLessonId] = useState<string>("");
+  const [generatingItemId, setGeneratingItemId] = useState<string | null>(null);
+
+  const handleGeneratePhonetic = async (
+    itemId: string,
+    thText: string,
+    type: "word" | "phrase",
+  ) => {
+    if (!thText) return;
+    setGeneratingItemId(itemId);
+    try {
+      const res = await fetch("/api/generate-phonetic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: thText }),
+      });
+      if (!res.ok) throw new Error("Failed to generate");
+      const data = await res.json();
+      if (data.phonetic) {
+        if (type === "word") {
+          handleWordUpdate(itemId, "phonetic", data.phonetic);
+        } else {
+          handlePhraseUpdate(itemId, "phonetic", data.phonetic);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGeneratingItemId(null);
+    }
+  };
 
   const lesson = useMemo(
     () => course.lessons.find((l) => l.id === id) || null,
@@ -520,8 +552,23 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-slate-500">
+                      <label className="text-[11px] font-semibold text-slate-500 flex justify-between items-center">
                         Phonétique
+                        <button
+                          disabled={generatingItemId === word.id || !word.th}
+                          onClick={() =>
+                            handleGeneratePhonetic(word.id, word.th, "word")
+                          }
+                          className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                          title="Générer avec Gemini"
+                        >
+                          {generatingItemId === word.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={12} />
+                          )}
+                          API
+                        </button>
                       </label>
                       <input
                         value={word.phonetic}
@@ -736,26 +783,43 @@ export default function LessonEditorClient({ id }: { id: string }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <input
-                      value={phrase.phonetic}
-                      placeholder="Phonetic"
-                      onChange={(e) =>
-                        handlePhraseUpdate(
-                          phrase.id,
-                          "phonetic",
-                          e.target.value,
-                        )
-                      }
-                      className="bg-transparent border-b border-slate-300 outline-none text-[12px] text-slate-500 w-1/3"
-                    />
-                    <span className="text-slate-400 text-xs">•</span>
+                    <div className="relative w-1/3 shrink-0 flex items-center">
+                      <input
+                        value={phrase.phonetic}
+                        placeholder="Phonetic"
+                        onChange={(e) =>
+                          handlePhraseUpdate(
+                            phrase.id,
+                            "phonetic",
+                            e.target.value,
+                          )
+                        }
+                        className="bg-transparent border-b border-slate-300 outline-none text-[12px] text-slate-500 w-full pr-12"
+                      />
+                      <button
+                        onClick={() =>
+                          handleGeneratePhonetic(phrase.id, phrase.th, "phrase")
+                        }
+                        disabled={generatingItemId === phrase.id || !phrase.th}
+                        className="absolute right-0 bottom-1 flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                        title="Générer avec Gemini"
+                      >
+                        {generatingItemId === phrase.id ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={12} />
+                        )}
+                        API
+                      </button>
+                    </div>
+                    <span className="text-slate-400 text-xs shrink-0">•</span>
                     <input
                       value={phrase.fr}
                       placeholder="French"
                       onChange={(e) =>
                         handlePhraseUpdate(phrase.id, "fr", e.target.value)
                       }
-                      className="bg-transparent border-b border-slate-300 outline-none text-[12px] text-slate-500 w-1/3"
+                      className="bg-transparent border-b border-slate-300 outline-none text-[12px] text-slate-500 w-1/3 grow"
                     />
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
