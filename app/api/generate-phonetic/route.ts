@@ -32,8 +32,11 @@ export async function POST(req: NextRequest) {
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: `Provide the phonetic pronunciation for the following Thai text. 
-Use a transcription system that clearly distinguishes vowel length (e.g., 'a' vs 'aa') and indicates tones using standard diacritics (mid: no mark, low: à, falling: â, high: á, rising: ǎ). Also use hyphens between syllables where appropriate.
-Example: ห้านาที -> hâa naa-thii.
+Use a transcription system that clearly distinguishes vowel length (e.g., 'a' vs 'aa') and indicates tones using standard diacritics (mid: no mark, low: à, falling: â, high: á, rising: ǎ).
+Important rules for spacing and hyphenation:
+- Use SPACES between distinct words.
+- Use HYPHENS between syllables WITHIN the same word.
+Example: ห้านาที -> hâa naa-thii (since ห้า is a word and นาที is another word).
 ONLY return the phonetic string, nothing else. Do not use quotes or markdown.
 Thai text: ${text}`,
     });
