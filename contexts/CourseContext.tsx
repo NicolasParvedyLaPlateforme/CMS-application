@@ -10,6 +10,7 @@ interface CourseContextType {
   updateLesson: (lessonId: string, updatedLesson: Lesson) => void;
   addLesson: (lesson: Lesson) => void;
   deleteLesson: (lessonId: string) => void;
+  reorderLessons: (startIndex: number, endIndex: number) => void;
   report: ValidationReport;
   exportCourse: () => void;
   resetCourse: () => void;
@@ -77,6 +78,15 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const reorderLessons = (startIndex: number, endIndex: number) => {
+    setCourse(prev => {
+      const result = Array.from(prev.lessons);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return { ...prev, lessons: result };
+    });
+  };
+
   const exportCourse = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(course, null, 2));
     const dlAnchorElem = document.createElement('a');
@@ -91,7 +101,7 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CourseContext.Provider value={{ course, setCourse, updateLesson, addLesson, deleteLesson, report, exportCourse, resetCourse, saveStatus }}>
+    <CourseContext.Provider value={{ course, setCourse, updateLesson, addLesson, deleteLesson, reorderLessons, report, exportCourse, resetCourse, saveStatus }}>
       {children}
     </CourseContext.Provider>
   );
