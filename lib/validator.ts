@@ -30,6 +30,39 @@ export function validateCourse(course: Course): ValidationReport {
   let accumulativeWords = new Set<string>();
 
   course.lessons.forEach((lesson) => {
+    // Basic Info Validations
+    if (!lesson.id || lesson.id.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `L'ID de la leçon est manquant.`,
+        lessonId: lesson.id,
+      });
+    }
+    
+    if (!lesson.title || lesson.title.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `Le titre de la leçon (FR) est manquant.`,
+        lessonId: lesson.id,
+      });
+    }
+
+    if (!lesson.titleEn || lesson.titleEn.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `Le titre anglais de la leçon (EN) est manquant.`,
+        lessonId: lesson.id,
+      });
+    }
+    
+    if (!lesson.imageUrl || lesson.imageUrl.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `L'URL de l'image de la leçon est manquante.`,
+        lessonId: lesson.id,
+      });
+    }
+
     if (globalIds.has(lesson.id)) {
       errors.push({
         type: "error",
@@ -60,8 +93,15 @@ export function validateCourse(course: Course): ValidationReport {
     const currentLessonWords = new Set<string>();
 
     lesson.words.forEach((word) => {
-      // Duplicate Word ID
-      if (globalIds.has(word.id)) {
+      // Missing Word ID
+      if (!word.id || word.id.trim() === "") {
+        errors.push({
+          type: "error",
+          message: `L'ID du mot est manquant.`,
+          lessonId: lesson.id,
+          itemId: word.id,
+        });
+      } else if (globalIds.has(word.id)) {
         const existingLessonId = globalIdSource.get(word.id);
         errors.push({
           type: "error",
@@ -186,8 +226,15 @@ export function validateCourse(course: Course): ValidationReport {
     const availableWords = chronologicalWords.get(lesson.id) || new Set();
 
     lesson.phrases.forEach((phrase) => {
-      // Duplicate Phrase ID
-      if (globalIds.has(phrase.id)) {
+      // Missing Phrase ID
+      if (!phrase.id || phrase.id.trim() === "") {
+        errors.push({
+          type: "error",
+          message: `L'ID de la phrase est manquant.`,
+          lessonId: lesson.id,
+          itemId: phrase.id,
+        });
+      } else if (globalIds.has(phrase.id)) {
         const existingLessonId = globalIdSource.get(phrase.id);
         errors.push({
           type: "error",

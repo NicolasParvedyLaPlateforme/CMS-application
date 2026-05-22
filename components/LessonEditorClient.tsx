@@ -362,7 +362,7 @@ export default function LessonEditorClient({ id }: { id: string }) {
               <input
                 value={lesson.id}
                 onChange={(e) => handleUpdateField("id", e.target.value)}
-                className="w-full border border-slate-300 rounded px-2.5 py-1.5 text-sm bg-slate-50"
+                className={`w-full border rounded px-2.5 py-1.5 text-sm ${!lesson.id ? "border-red-300 bg-red-50" : "border-slate-300 bg-slate-50"}`}
               />
             </div>
             <div className="space-y-1">
@@ -372,7 +372,7 @@ export default function LessonEditorClient({ id }: { id: string }) {
               <input
                 value={lesson.imageUrl || ""}
                 onChange={(e) => handleUpdateField("imageUrl", e.target.value)}
-                className="w-full border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all"
+                className={`w-full border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all ${!lesson.imageUrl ? "border-red-300 bg-red-50" : "border-slate-300"}`}
               />
             </div>
             <div className="space-y-1">
@@ -382,7 +382,7 @@ export default function LessonEditorClient({ id }: { id: string }) {
               <input
                 value={lesson.title}
                 onChange={(e) => handleUpdateField("title", e.target.value)}
-                className="w-full border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all"
+                className={`w-full border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all ${!lesson.title ? "border-red-300 bg-red-50" : "border-slate-300"}`}
               />
             </div>
             <div className="space-y-1">
@@ -392,10 +392,20 @@ export default function LessonEditorClient({ id }: { id: string }) {
               <input
                 value={lesson.titleEn || ""}
                 onChange={(e) => handleUpdateField("titleEn", e.target.value)}
-                className="w-full border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all"
+                className={`w-full border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all ${!lesson.titleEn ? "border-red-300 bg-red-50" : "border-slate-300"}`}
               />
             </div>
           </div>
+          {lessonErrors.length > 0 && (
+            <div className="mt-4 bg-red-50 p-3 rounded-md text-red-700 text-[12px] border border-red-200 flex flex-col gap-1.5">
+              {lessonErrors.map((err, i) => (
+                <div key={i} className="flex items-start gap-1.5">
+                  <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                  <span className="flex-1">{err.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <AIAssistantTool lessonId={lesson.id} />
