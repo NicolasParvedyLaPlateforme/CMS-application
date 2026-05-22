@@ -39,20 +39,20 @@ export function validateCourse(course: Course): ValidationReport {
     }
     globalIds.add(lesson.id);
 
-    // Rule: Max 5 words
-    if (lesson.words.length > 5) {
+    // Rule: Max 7 words
+    if (lesson.words.length > 7) {
       errors.push({
         type: "error",
-        message: `Lesson has ${lesson.words.length} words. Maximum allowed is 5.`,
+        message: `Lesson has ${lesson.words.length} words. Maximum allowed is 7.`,
         lessonId: lesson.id,
       });
     }
 
-    // Rule: Exactly 5 phrases
-    if (lesson.phrases.length !== 5) {
+    // Rule: Max 7 phrases
+    if (lesson.phrases.length > 7) {
       errors.push({
         type: "error",
-        message: `Lesson has ${lesson.phrases.length} phrases. Exactly 5 are required.`,
+        message: `Lesson has ${lesson.phrases.length} phrases. Maximum allowed is 7.`,
         lessonId: lesson.id,
       });
     }
