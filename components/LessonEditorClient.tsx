@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
+import AIAssistantTool from "./AIAssistantTool";
 
 export default function LessonEditorClient({ id }: { id: string }) {
   const { course, updateLesson, report, moveItem } = useCourse();
@@ -63,6 +64,34 @@ export default function LessonEditorClient({ id }: { id: string }) {
     [course, id],
   );
 
+  const filteredWords = useMemo(() => {
+    if (!lesson) return [];
+    if (!searchTerm.trim()) return lesson.words;
+    const lower = searchTerm.toLowerCase();
+    return lesson.words.filter(
+      (w) =>
+        w.th.toLowerCase().includes(lower) ||
+        w.en.toLowerCase().includes(lower) ||
+        w.fr.toLowerCase().includes(lower) ||
+        w.phonetic.toLowerCase().includes(lower) ||
+        w.id.toLowerCase().includes(lower),
+    );
+  }, [lesson, searchTerm]);
+
+  const filteredPhrases = useMemo(() => {
+    if (!lesson) return [];
+    if (!searchTerm.trim()) return lesson.phrases;
+    const lower = searchTerm.toLowerCase();
+    return lesson.phrases.filter(
+      (p) =>
+        p.th.toLowerCase().includes(lower) ||
+        p.en.toLowerCase().includes(lower) ||
+        p.fr.toLowerCase().includes(lower) ||
+        p.phonetic.toLowerCase().includes(lower) ||
+        p.id.toLowerCase().includes(lower),
+    );
+  }, [lesson, searchTerm]);
+
   if (!lesson) {
     return (
       <div className="max-w-4xl mx-auto py-12 text-center">
@@ -76,32 +105,6 @@ export default function LessonEditorClient({ id }: { id: string }) {
       </div>
     );
   }
-
-  const filteredWords = useMemo(() => {
-    if (!searchTerm.trim()) return lesson.words;
-    const lower = searchTerm.toLowerCase();
-    return lesson.words.filter(
-      (w) =>
-        w.th.toLowerCase().includes(lower) ||
-        w.en.toLowerCase().includes(lower) ||
-        w.fr.toLowerCase().includes(lower) ||
-        w.phonetic.toLowerCase().includes(lower) ||
-        w.id.toLowerCase().includes(lower),
-    );
-  }, [lesson.words, searchTerm]);
-
-  const filteredPhrases = useMemo(() => {
-    if (!searchTerm.trim()) return lesson.phrases;
-    const lower = searchTerm.toLowerCase();
-    return lesson.phrases.filter(
-      (p) =>
-        p.th.toLowerCase().includes(lower) ||
-        p.en.toLowerCase().includes(lower) ||
-        p.fr.toLowerCase().includes(lower) ||
-        p.phonetic.toLowerCase().includes(lower) ||
-        p.id.toLowerCase().includes(lower),
-    );
-  }, [lesson.phrases, searchTerm]);
 
   // --- Handlers ---
   const handleUpdateField = <K extends keyof Lesson>(
@@ -394,6 +397,8 @@ export default function LessonEditorClient({ id }: { id: string }) {
             </div>
           </div>
         </section>
+
+        <AIAssistantTool lessonId={lesson.id} />
 
         {/* Global Search Bar */}
         <section className="bg-white rounded-lg border border-slate-200 p-4 mb-4 flex items-center gap-3">
