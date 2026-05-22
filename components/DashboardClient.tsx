@@ -14,6 +14,7 @@ import {
 import { ValidationPanel } from "@/components/ValidationPanel";
 import BatchPhoneticTool from "@/components/BatchPhoneticTool";
 import CourseReorganizerTool from "@/components/CourseReorganizerTool";
+import LessonMetaTool from "@/components/LessonMetaTool";
 
 export default function DashboardClient() {
   const {
@@ -198,6 +199,8 @@ export default function DashboardClient() {
       </div>
 
       <CourseReorganizerTool />
+      
+      <LessonMetaTool />
       
       <BatchPhoneticTool />
 
