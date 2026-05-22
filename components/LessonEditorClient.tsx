@@ -396,6 +396,28 @@ export default function LessonEditorClient({ id }: { id: string }) {
               />
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase text-slate-500">
+                Description (FR)
+              </label>
+              <textarea
+                value={lesson.description || ""}
+                onChange={(e) => handleUpdateField("description", e.target.value)}
+                className={`w-full border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all resize-y min-h-[80px] ${!lesson.description ? "border-red-300 bg-red-50" : "border-slate-300"}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase text-slate-500">
+                Description (EN)
+              </label>
+              <textarea
+                value={lesson.descriptionEn || ""}
+                onChange={(e) => handleUpdateField("descriptionEn", e.target.value)}
+                className={`w-full border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2.5 py-1.5 text-sm outline-none transition-all resize-y min-h-[80px] ${!lesson.descriptionEn ? "border-red-300 bg-red-50" : "border-slate-300"}`}
+              />
+            </div>
+          </div>
           {lessonErrors.length > 0 && (
             <div className="mt-4 bg-red-50 p-3 rounded-md text-red-700 text-[12px] border border-red-200 flex flex-col gap-1.5">
               {lessonErrors.map((err, i) => (

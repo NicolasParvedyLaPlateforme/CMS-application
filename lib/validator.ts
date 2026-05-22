@@ -54,6 +54,22 @@ export function validateCourse(course: Course): ValidationReport {
         lessonId: lesson.id,
       });
     }
+
+    if (!lesson.description || lesson.description.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `La description de la leçon (FR) est manquante.`,
+        lessonId: lesson.id,
+      });
+    }
+
+    if (!lesson.descriptionEn || lesson.descriptionEn.trim() === "") {
+      errors.push({
+        type: "error",
+        message: `La description anglaise de la leçon (EN) est manquante.`,
+        lessonId: lesson.id,
+      });
+    }
     
     if (!lesson.imageUrl || lesson.imageUrl.trim() === "") {
       errors.push({
