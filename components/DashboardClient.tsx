@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ValidationPanel } from "@/components/ValidationPanel";
 import BatchPhoneticTool from "@/components/BatchPhoneticTool";
+import CourseReorganizerTool from "@/components/CourseReorganizerTool";
 
 export default function DashboardClient() {
   const {
@@ -196,6 +197,8 @@ export default function DashboardClient() {
         </div>
       </div>
 
+      <CourseReorganizerTool />
+      
       <BatchPhoneticTool />
 
       <div className="xl:hidden">
