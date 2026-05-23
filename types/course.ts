@@ -44,6 +44,28 @@ export interface ValidationErrorItem {
   actionUrl?: string;
 }
 
+export interface UnitShades {
+  l1: string;
+  l2: string;
+  l3: string;
+  l4: string;
+}
+
+export interface Unit {
+  id: string;
+  title: string;
+  titleEn: string;
+  description: string;
+  descriptionEn: string;
+  colorClass: string;
+  borderClass: string;
+  textClass: string;
+  hoverClass: string;
+  lightTextClass: string;
+  bgMutedClass: string;
+  shades: UnitShades;
+}
+
 export interface ValidationReport {
   errors: ValidationErrorItem[];
   warnings: ValidationErrorItem[];
