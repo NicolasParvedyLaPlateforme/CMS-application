@@ -134,6 +134,16 @@ export function validateCourse(course: Course): ValidationReport {
       currentLessonWords.add(word.id);
       accumulativeWords.add(word.id);
 
+      // Rule: imageUrl not empty
+      if (!word.imageUrl || word.imageUrl.trim() === "") {
+        errors.push({
+          type: "error",
+          message: `L'Image URL manquante.`,
+          lessonId: lesson.id,
+          itemId: word.id,
+        });
+      }
+
       // Rule: Phonetic not empty
       if (!word.phonetic || word.phonetic.trim() === "") {
         errors.push({
@@ -262,6 +272,16 @@ export function validateCourse(course: Course): ValidationReport {
       } else {
         globalIdSource.set(phrase.id, lesson.id);
         globalIds.add(phrase.id);
+      }
+
+      // Rule: imageUrl not empty
+      if (!phrase.imageUrl || phrase.imageUrl.trim() === "") {
+        errors.push({
+          type: "error",
+          message: `L'Image URL manquante.`,
+          lessonId: lesson.id,
+          itemId: phrase.id,
+        });
       }
 
       // Rule: Phonetic not empty

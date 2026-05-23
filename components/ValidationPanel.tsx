@@ -16,6 +16,7 @@ function getCategory(msg: string) {
   if (lower.includes("future lesson")) return "Dépendance Future";
   if (lower.includes("does not exist")) return "Mot Introuvable";
   if (lower.includes("thai construction mismatch")) return "Construction Thaï Invalide";
+  if (lower.includes("image url manquante") || lower.includes("image de la leçon est manquante")) return "Images vides";
   return "Autre";
 }
 
