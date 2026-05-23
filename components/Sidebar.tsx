@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, AlertTriangle, Download, Trash2, Save, Loader2 } from "lucide-react";
+import { LayoutDashboard, BookOpen, AlertTriangle, Download, Trash2, Save, Loader2, RefreshCcw, Type, FileText } from "lucide-react";
 import { useCourse } from "@/contexts/CourseContext";
 import { useState } from "react";
 
@@ -35,6 +35,34 @@ export function Sidebar() {
         >
           <BookOpen size={18} className="mr-3" />
           Éditeur de Leçons
+        </Link>
+        
+        <div className="mt-4 mb-2 px-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Outils IA
+        </div>
+
+        <Link 
+          href="/reorganizer" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/reorganizer') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <RefreshCcw size={18} className="mr-3" />
+          Réorganisation
+        </Link>
+
+        <Link 
+          href="/metadata" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/metadata') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <FileText size={18} className="mr-3" />
+          Métadonnées
+        </Link>
+
+        <Link 
+          href="/phonetics" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/phonetics') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <Type size={18} className="mr-3" />
+          Phonétique
         </Link>
       </nav>
 
