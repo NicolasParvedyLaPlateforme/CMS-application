@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import AIAssistantTool from "./AIAssistantTool";
+import AICheckerBlock from "./AICheckerBlock";
 
 export default function LessonEditorClient({ id }: { id: string }) {
   const { course, updateLesson, report, moveItem } = useCourse();
@@ -29,6 +30,13 @@ export default function LessonEditorClient({ id }: { id: string }) {
   >(null);
   const [moveTargetLessonId, setMoveTargetLessonId] = useState<string>("");
   const [generatingItemId, setGeneratingItemId] = useState<string | null>(null);
+
+  const [checkingItem, setCheckingItem] = useState<{
+    id: string;
+    type: "word" | "phrase";
+    originalItem: any;
+    hasUpdated: boolean;
+  } | null>(null);
 
   const handleGeneratePhonetic = async (
     itemId: string,
@@ -595,21 +603,31 @@ export default function LessonEditorClient({ id }: { id: string }) {
                     <div className="space-y-1">
                       <label className="text-[11px] font-semibold text-slate-500 flex justify-between items-center">
                         Phonétique
-                        <button
-                          disabled={generatingItemId === word.id || !word.th}
-                          onClick={() =>
-                            handleGeneratePhonetic(word.id, word.th, "word")
-                          }
-                          className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
-                          title="Générer avec Gemini"
-                        >
-                          {generatingItemId === word.id ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            disabled={generatingItemId === word.id || !word.th}
+                            onClick={() =>
+                              handleGeneratePhonetic(word.id, word.th, "word")
+                            }
+                            className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                            title="Générer phonétique uniquement"
+                          >
+                            {generatingItemId === word.id ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={12} />
+                            )}
+                            API
+                          </button>
+                          <button
+                            onClick={() => setCheckingItem({ id: word.id, type: "word", originalItem: {...word}, hasUpdated: false })}
+                            className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-800 transition-colors"
+                            title="Vérifier avec IA"
+                          >
                             <Sparkles size={12} />
-                          )}
-                          API
-                        </button>
+                            IA Check
+                          </button>
+                        </div>
                       </label>
                       <input
                         value={word.phonetic}
@@ -678,6 +696,29 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       />
                     </div>
                   </div>
+                  
+                  {checkingItem?.id === word.id && checkingItem.type === "word" && (
+                    <AICheckerBlock
+                      item={word}
+                      originalItem={checkingItem.originalItem}
+                      hasUpdated={checkingItem.hasUpdated}
+                      type="word"
+                      onUpdate={(newItem) => {
+                        const updatedWords = [...lesson.words];
+                        updatedWords[idx] = newItem;
+                        updateLesson(lesson.id, { ...lesson, words: updatedWords }, "Modification IA du mot");
+                        setCheckingItem({ ...checkingItem, hasUpdated: true });
+                      }}
+                      onCancel={() => setCheckingItem(null)}
+                      onRevert={() => {
+                        const updatedWords = [...lesson.words];
+                        updatedWords[idx] = checkingItem.originalItem;
+                        updateLesson(lesson.id, { ...lesson, words: updatedWords }, "Annulation modification IA");
+                        setCheckingItem({ ...checkingItem, hasUpdated: false });
+                      }}
+                    />
+                  )}
+
                   {rowErrs.length > 0 && (
                     <div className="bg-red-50 p-2 text-red-700 text-[12px] border-t border-red-100 flex flex-col gap-1">
                       {rowErrs.map((err, i) => (
@@ -850,21 +891,31 @@ export default function LessonEditorClient({ id }: { id: string }) {
                         }
                         className="bg-transparent border-b border-slate-300 outline-none text-[12px] text-slate-500 w-full pr-12"
                       />
-                      <button
-                        onClick={() =>
-                          handleGeneratePhonetic(phrase.id, phrase.th, "phrase")
-                        }
-                        disabled={generatingItemId === phrase.id || !phrase.th}
-                        className="absolute right-0 bottom-1 flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
-                        title="Générer avec Gemini"
-                      >
-                        {generatingItemId === phrase.id ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
+                      <div className="absolute right-0 bottom-1 flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            handleGeneratePhonetic(phrase.id, phrase.th, "phrase")
+                          }
+                          disabled={generatingItemId === phrase.id || !phrase.th}
+                          className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                          title="Générer phonétique uniquement"
+                        >
+                          {generatingItemId === phrase.id ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={12} />
+                          )}
+                          API
+                        </button>
+                        <button
+                          onClick={() => setCheckingItem({ id: phrase.id, type: "phrase", originalItem: {...phrase}, hasUpdated: false })}
+                          className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-800 transition-colors"
+                          title="Vérifier avec IA"
+                        >
                           <Sparkles size={12} />
-                        )}
-                        API
-                      </button>
+                          IA Check
+                        </button>
+                      </div>
                     </div>
                     <span className="text-slate-400 text-xs shrink-0">•</span>
                     <input
@@ -940,6 +991,31 @@ export default function LessonEditorClient({ id }: { id: string }) {
                         )}
                     </div>
                   </div>
+                  
+                  {checkingItem?.id === phrase.id && checkingItem.type === "phrase" && (
+                    <div className="mt-3 -mx-3">
+                      <AICheckerBlock
+                        item={phrase}
+                        originalItem={checkingItem.originalItem}
+                        hasUpdated={checkingItem.hasUpdated}
+                        type="phrase"
+                        onUpdate={(newItem) => {
+                          const updatedPhrases = [...lesson.phrases];
+                          updatedPhrases[idx] = newItem;
+                          updateLesson(lesson.id, { ...lesson, phrases: updatedPhrases }, "Modification IA de la phrase");
+                          setCheckingItem({ ...checkingItem, hasUpdated: true });
+                        }}
+                        onCancel={() => setCheckingItem(null)}
+                        onRevert={() => {
+                          const updatedPhrases = [...lesson.phrases];
+                          updatedPhrases[idx] = checkingItem.originalItem;
+                          updateLesson(lesson.id, { ...lesson, phrases: updatedPhrases }, "Annulation modification IA de la phrase");
+                          setCheckingItem({ ...checkingItem, hasUpdated: false });
+                        }}
+                      />
+                    </div>
+                  )}
+
                   {rowErrs.length > 0 && (
                     <div className="bg-red-50 p-2 text-red-700 text-[12px] border-t border-red-200 flex flex-col gap-1 -m-3 mt-3">
                       {rowErrs.map((err, i) => (
