@@ -28,6 +28,7 @@ export interface Lesson {
   titleEn?: string;
   descriptionEn?: string;
   imageUrl?: string;
+  isReview?: boolean;
 }
 
 export interface Course {

@@ -50,10 +50,24 @@ export function Sidebar() {
 
         <Link 
           href="/reorganizer" 
-          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/reorganizer') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname === '/reorganizer' ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
         >
           <RefreshCcw size={18} className="mr-3" />
-          Réorganisation
+          Réorganisation Leçons
+        </Link>
+        <Link 
+          href="/units-reorganizer" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/units-reorganizer') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <RefreshCcw size={18} className="mr-3" />
+          Structure Unités & Bilans
+        </Link>
+        <Link 
+          href="/bilan-updater" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/bilan-updater') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <FileText size={18} className="mr-3" />
+          Mise à jour des Bilans
         </Link>
 
         <Link 
