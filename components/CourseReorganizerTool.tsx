@@ -316,7 +316,7 @@ STRUCTURE JSON ATTENDUE :
                 {selectedLessonIds.size > 0 ? "Tout désélectionner" : "Tout sélectionner"}
               </button>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded p-2 max-h-32 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+            <div className="bg-slate-50 border border-slate-200 rounded p-2 max-h-[600px] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
               {course.lessons.map((l) => (
                 <label key={l.id} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer hover:bg-white rounded p-1">
                   <input 

@@ -180,7 +180,7 @@ export default function BatchPhoneticTool() {
         </div>
       )}
 
-      <div className="p-4 max-h-[400px] overflow-y-auto">
+      <div className="p-4 max-h-[600px] overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {missingItems.map((item) => (
             <div
