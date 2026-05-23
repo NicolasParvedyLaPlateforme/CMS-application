@@ -136,12 +136,14 @@ export default function LessonEditorClient({ id }: { id: string }) {
   };
 
   const handleAddWord = () => {
+    const newId = `w_${uuidv4().substring(0, 6)}`;
     const newWord: Word = {
-      id: `w_${uuidv4().substring(0, 6)}`,
+      id: newId,
       th: "",
       fr: "",
       en: "",
       phonetic: "",
+      imageUrl: `/images/w_${newId}.svg`,
     };
     updateLesson(
       lesson.id,
@@ -220,13 +222,15 @@ export default function LessonEditorClient({ id }: { id: string }) {
   };
 
   const handleAddPhrase = () => {
+    const newId = `p_${uuidv4().substring(0, 6)}`;
     const newPhrase: Phrase = {
-      id: `p_${uuidv4().substring(0, 6)}`,
+      id: newId,
       th: "",
       fr: "",
       en: "",
       phonetic: "",
       components: [],
+      imageUrl: `/images/p_${newId}.svg`,
     };
     updateLesson(
       lesson.id,
@@ -563,7 +567,7 @@ export default function LessonEditorClient({ id }: { id: string }) {
                       )}
                     </div>
                   </div>
-                  <div className="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-white">
+                  <div className="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 bg-white">
                     <div className="space-y-1">
                       <label className="text-[11px] font-semibold text-slate-500">
                         ID
@@ -659,6 +663,19 @@ export default function LessonEditorClient({ id }: { id: string }) {
                             </span>
                           </label>
                         )}
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-500">
+                        Image URL
+                      </label>
+                      <input
+                        value={word.imageUrl || ""}
+                        placeholder={`/images/w_${word.id}.svg`}
+                        onChange={(e) =>
+                          handleWordUpdate(word.id, "imageUrl", e.target.value)
+                        }
+                        className="w-full border border-slate-300 rounded px-2 py-1 text-[13px] text-slate-500 font-mono"
+                      />
                     </div>
                   </div>
                   {rowErrs.length > 0 && (
@@ -879,6 +896,14 @@ export default function LessonEditorClient({ id }: { id: string }) {
                         handlePhraseUpdate(phrase.id, "components", parts);
                       }}
                       className="bg-slate-200 px-2 py-0.5 rounded text-[10px] w-64 outline-none border-none text-slate-600 font-mono"
+                    />
+                    <input
+                      value={phrase.imageUrl || ""}
+                      placeholder={`/images/p_${phrase.id}.svg`}
+                      onChange={(e) =>
+                        handlePhraseUpdate(phrase.id, "imageUrl", e.target.value)
+                      }
+                      className="bg-slate-200 px-2 py-0.5 rounded text-[10px] w-48 outline-none border-none text-slate-600 font-mono"
                     />
                     <div className="flex-1 ml-4 flex flex-col gap-1">
                       <input
