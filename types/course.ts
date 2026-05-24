@@ -31,6 +31,23 @@ export interface Lesson {
   isReview?: boolean;
 }
 
+export interface Dialog {
+  speaker: string;
+  th: string;
+  phonetic: string;
+  fr: string;
+  en: string;
+}
+
+export interface Conversation {
+  id: string;
+  unitId: string;
+  title: string;
+  titleEn: string;
+  level: number;
+  dialogs: Dialog[];
+}
+
 export interface Course {
   lessons: Lesson[];
 }

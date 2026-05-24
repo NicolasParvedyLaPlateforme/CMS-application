@@ -38,10 +38,17 @@ export function Sidebar() {
         </Link>
         <Link 
           href="/units" 
-          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/units') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/units') && !pathname.startsWith('/units-reorganizer') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
         >
           <Layers size={18} className="mr-3" />
           Éditeur d'Unités
+        </Link>
+        <Link 
+          href="/conversations" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/conversations') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <BookOpen size={18} className="mr-3" />
+          Éditeur de Conversations
         </Link>
         
         <div className="mt-4 mb-2 px-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
