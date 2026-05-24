@@ -88,20 +88,20 @@ export function validateCourse(course: Course): ValidationReport {
     }
     globalIds.add(lesson.id);
 
-    // Rule: Max 7 words
-    if (lesson.words.length > 7) {
-      errors.push({
-        type: "error",
-        message: `Lesson has ${lesson.words.length} words. Maximum allowed is 7.`,
+    // Rule: Expected 7 words
+    if (lesson.words.length !== 7) {
+      warnings.push({
+        type: "warning",
+        message: `La leçon compte ${lesson.words.length} mots, mais devrait idéalement en avoir 7.`,
         lessonId: lesson.id,
       });
     }
 
-    // Rule: Max 7 phrases
-    if (lesson.phrases.length > 7) {
-      errors.push({
-        type: "error",
-        message: `Lesson has ${lesson.phrases.length} phrases. Maximum allowed is 7.`,
+    // Rule: Expected 7 phrases
+    if (lesson.phrases.length !== 7) {
+      warnings.push({
+        type: "warning",
+        message: `La leçon compte ${lesson.phrases.length} phrases, mais devrait idéalement en avoir 7.`,
         lessonId: lesson.id,
       });
     }
@@ -144,8 +144,8 @@ export function validateCourse(course: Course): ValidationReport {
         });
       }
 
-      // Rule: Phonetic not empty
-      if (!word.phonetic || word.phonetic.trim() === "") {
+      // Rule: Phonetic not empty (exception for w_dots)
+      if (word.id !== "w_dots" && (!word.phonetic || word.phonetic.trim() === "")) {
         errors.push({
           type: "error",
           message: `Phonetic cannot be empty.`,
