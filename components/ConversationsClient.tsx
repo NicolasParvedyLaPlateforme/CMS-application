@@ -13,10 +13,16 @@ export function ConversationsClient() {
 
   const [storyContext, setStoryContext] = useState("");
   const [showContextModal, setShowContextModal] = useState(false);
+  
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  const [showTitleAIModal, setShowTitleAIModal] = useState(false);
+  const [titleAIPrompt, setTitleAIPrompt] = useState("");
+  const [titleAIResponse, setTitleAIResponse] = useState("");
+  const [copiedTitlePrompt, setCopiedTitlePrompt] = useState(false);
 
   // Load from local storage
   useEffect(() => {
@@ -267,6 +273,69 @@ FORMAT ATTENDU :
     }
   };
 
+  const generateTitlePrompt = (conv: Conversation, context: string) => {
+    const dialogsText = conv.dialogs.map(d => `${d.speaker}: ${d.th} (${d.fr} / ${d.en})`).join("\n");
+
+    return `Tu es un expert en création de cours de thaïlandais.
+Voici une conversation de niveau A1 extraite d'une histoire.
+
+Contexte global :
+${context.trim() ? context : "Aucun contexte"}
+
+Dialogue de la conversation :
+---
+${dialogsText}
+---
+
+MISSION :
+Génère un titre court et descriptif pour cette conversation (maximum 4-5 mots), en français et en anglais. Le titre doit représenter l'action principale de cette conversation.
+
+IMPORTANT :
+Renvoie UNIQUEMENT un objet JSON avec les clés "title" et "titleEn". Sans texte additionnel.
+
+FORMAT ATTENDU :
+{
+  "title": "Titre en français",
+  "titleEn": "Title in English"
+}`;
+  };
+
+  const openTitleAIModal = () => {
+    if (!selectedConv) return;
+    const prompt = generateTitlePrompt(selectedConv, storyContext);
+    setTitleAIPrompt(prompt);
+    setTitleAIResponse("");
+    setShowTitleAIModal(true);
+  };
+
+  const copyTitlePrompt = () => {
+    navigator.clipboard.writeText(titleAIPrompt);
+    setCopiedTitlePrompt(true);
+    setTimeout(() => setCopiedTitlePrompt(false), 2000);
+  };
+
+  const applyTitleAIResponse = () => {
+    if (!selectedConv) return;
+    try {
+      let cleanResponse = titleAIResponse.trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse.replace(/^```json/, "").replace(/```$/, "").trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse.replace(/^```/, "").replace(/```$/, "").trim();
+      }
+      const parsed = JSON.parse(cleanResponse);
+      if (parsed.title && parsed.titleEn) {
+        updateSelectedConv("title", parsed.title);
+        updateSelectedConv("titleEn", parsed.titleEn);
+        setShowTitleAIModal(false);
+      } else {
+        alert("Le JSON ne contient pas 'title' et 'titleEn'.");
+      }
+    } catch (e) {
+      alert("Erreur: Le format JSON est invalide.");
+    }
+  };
+
   if (!isLoaded) return <div className="p-8"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
@@ -342,7 +411,7 @@ FORMAT ATTENDU :
           {selectedConv ? (
             <div className="space-y-6">
               <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">ID de la conversation</label>
                     <input 
@@ -370,6 +439,19 @@ FORMAT ATTENDU :
                       className="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">Image</label>
+                    <div className="flex">
+                      <span className="px-2.5 py-2.5 bg-slate-100 border border-r-0 border-slate-200 rounded-l text-slate-500 text-[11px] font-mono flex items-center">/images/</span>
+                      <input 
+                        type="text" 
+                        value={selectedConv.imageUrl?.replace(/^\/images\//, '') || ''} 
+                        onChange={(e) => updateSelectedConv('imageUrl', e.target.value ? `/images/${e.target.value}` : '')}
+                        className="w-full min-w-0 p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-r outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="nom.png"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -390,6 +472,11 @@ FORMAT ATTENDU :
                       onChange={(e) => updateSelectedConv('titleEn', e.target.value)}
                       className="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
+                  </div>
+                  <div className="col-span-1 lg:col-span-2 flex justify-end">
+                     <button onClick={openTitleAIModal} className="text-xs bg-indigo-50 text-indigo-700 py-1.5 px-3 rounded flex items-center gap-1.5 hover:bg-indigo-100 font-semibold transition-colors">
+                        <Sparkles size={14} /> Générer les titres
+                     </button>
                   </div>
                 </div>
               </div>
@@ -596,6 +683,56 @@ FORMAT ATTENDU :
                 className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
               >
                 <Check size={16}/> Appliquer à la conversation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTitleAIModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-indigo-700">
+                <Sparkles size={20} />
+                Générateur IA de Titre
+              </h3>
+              <button onClick={() => setShowTitleAIModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto space-y-6">
+              <div>
+                 <div className="flex justify-between items-center mb-2">
+                   <label className="text-sm font-semibold text-slate-700">1. Copiez ce prompt et donnez-le à Gemini</label>
+                   <button onClick={copyTitlePrompt} className="text-xs bg-slate-100 hover:bg-slate-200 py-1.5 px-3 rounded flex items-center gap-1.5 font-semibold text-slate-700 transition-colors">
+                     {copiedTitlePrompt ? <Check size={14} className="text-green-600" /> : <Copy size={14} />} {copiedTitlePrompt ? "Copié !" : "Copier"}
+                   </button>
+                 </div>
+                 <textarea
+                   readOnly
+                   value={titleAIPrompt}
+                   className="w-full h-64 bg-slate-50 p-3 border rounded-lg border-slate-200 outline-none font-mono text-[11px] text-slate-600 resize-none leading-relaxed"
+                 />
+              </div>
+              <div>
+                 <label className="text-sm font-semibold text-slate-700 mb-2 block">2. Collez la réponse JSON de Gemini ici</label>
+                 <textarea
+                   value={titleAIResponse}
+                   onChange={(e) => setTitleAIResponse(e.target.value)}
+                   className="w-full h-24 p-3 bg-slate-50 border rounded-lg border-slate-200 outline-none focus:border-blue-500 focus:bg-white font-mono text-xs placeholder:text-slate-400 transition-colors resize-none"
+                   placeholder='{\n  "title": "Titre en français",\n  "titleEn": "Title in English"\n}'
+                 />
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+              <button onClick={() => setShowTitleAIModal(false)} className="px-5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold transition-colors">
+                Annuler
+              </button>
+              <button 
+                onClick={applyTitleAIResponse}
+                disabled={!titleAIResponse.trim()}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+              >
+                <Check size={16}/> Appliquer aux titres
               </button>
             </div>
           </div>

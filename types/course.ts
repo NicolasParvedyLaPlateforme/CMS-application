@@ -45,6 +45,7 @@ export interface Conversation {
   title: string;
   titleEn: string;
   level: number;
+  imageUrl?: string;
   dialogs: Dialog[];
 }
 
