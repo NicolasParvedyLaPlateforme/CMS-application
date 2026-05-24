@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Conversation, Dialog } from "@/types/course";
-import { Loader2, Save, Upload, Download, Plus, Trash2, Edit, GripVertical } from "lucide-react";
+import { Loader2, Save, Upload, Download, Plus, Trash2, Edit, GripVertical, FileText, Sparkles, X, Copy, Check } from "lucide-react";
 
 export function ConversationsClient() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -10,6 +10,13 @@ export function ConversationsClient() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [storyContext, setStoryContext] = useState("");
+  const [showContextModal, setShowContextModal] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   // Load from local storage
   useEffect(() => {
@@ -28,6 +35,10 @@ export function ConversationsClient() {
         setConversations([]);
       }
     }
+    
+    const savedContext = localStorage.getItem("th-story-context");
+    if (savedContext) setStoryContext(savedContext);
+
     setIsLoaded(true);
   }, []);
 
@@ -37,12 +48,13 @@ export function ConversationsClient() {
     setSaveStatus("saving");
     const timer = setTimeout(() => {
       localStorage.setItem("th-conversations-draft", JSON.stringify(conversations));
+      localStorage.setItem("th-story-context", storyContext);
       setSaveStatus("saved");
       const hideTimer = setTimeout(() => setSaveStatus("idle"), 3000);
       return () => clearTimeout(hideTimer);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [conversations, isLoaded]);
+  }, [conversations, storyContext, isLoaded]);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -166,6 +178,95 @@ export function ConversationsClient() {
     setDragOverDialogIndex(null);
   };
 
+  const exportContext = () => {
+    const exportData = { context: storyContext };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const dlAnchorElem = document.createElement("a");
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "contexte-dialogue.json");
+    dlAnchorElem.click();
+  };
+
+  const generatePrompt = (convIndex: number, currentConv: Conversation, allConvs: Conversation[], context: string) => {
+    const preceding = allConvs.slice(0, convIndex);
+    let precedingText = "";
+    if (preceding.length > 0) {
+      precedingText = preceding.map((c, i) => {
+        const dialogs = c.dialogs.map(d => `${d.speaker}: ${d.th}`).join("\n");
+        return `Conversation ${i + 1} (${c.title}):\n${dialogs}`;
+      }).join("\n\n");
+    } else {
+      precedingText = "C'est la toute première conversation de l'histoire, il n'y a pas de dialogues précédents.";
+    }
+
+    return `Tu es un expert en création de cours interactifs de thaïlandais pour des apprenants francophones de niveau A1.
+L'objectif est de raconter une histoire continue de manière logique et pédagogique, où le vocabulaire thaï s'enrichit pas à pas, de façon naturelle.
+
+Voici le contexte global de l'histoire et des personnages :
+${context.trim() ? context : "Aucun contexte spécifique n'a été défini."}
+
+Voici pour rappel le résumé des dialogues des conversations précédentes (seulement en thaï) pour te permettre d'assurer la continuité de l'histoire :
+---
+${precedingText}
+---
+
+MISSION :
+Tu dois maintenant générer la SUITE de l'histoire, c'est-à-dire la conversation numéro ${convIndex + 1} qui s'intitule "${currentConv.title}" (en anglais: "${currentConv.titleEn}"). 
+La grammaire et le vocabulaire doivent être adaptés pour un niveau A1 (débutant).
+La conversation peut contenir jusqu'à 10 répliques (dialogues). Les échanges doivent être naturels et logiques par rapport aux conversations précédentes.
+
+IMPORTANT :
+Renvoie UNIQUEMENT un objet JSON valide représentant un tableau respectant EXACTEMENT la structure requise. N'ajoute pas de texte avant ou après le JSON.
+Incluez bien la transcription phonétique (avec les tons) dans le champ "phonetic".
+
+FORMAT ATTENDU :
+[
+  {
+    "speaker": "Nom ou lettre (ex: A, B, Tom, Ann)",
+    "th": "texte en thaïlandais",
+    "phonetic": "transcription phonétique",
+    "fr": "traduction française de la réplique",
+    "en": "traduction anglaise de la réplique"
+  }
+]`;
+  };
+
+  const openAIModal = () => {
+    if (!selectedConv) return;
+    const selectedIndex = conversations.findIndex(c => c.id === selectedConvId);
+    const prompt = generatePrompt(selectedIndex, selectedConv, conversations, storyContext);
+    setAiPrompt(prompt);
+    setAiResponse("");
+    setShowAIModal(true);
+  };
+
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(aiPrompt);
+    setCopiedPrompt(true);
+    setTimeout(() => setCopiedPrompt(false), 2000);
+  };
+
+  const applyAIResponse = () => {
+    if (!selectedConv) return;
+    try {
+      let cleanResponse = aiResponse.trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse.replace(/^```json/, "").replace(/```$/, "").trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse.replace(/^```/, "").replace(/```$/, "").trim();
+      }
+      const parsed = JSON.parse(cleanResponse);
+      if (Array.isArray(parsed)) {
+        updateSelectedConv("dialogs", parsed);
+        setShowAIModal(false);
+      } else {
+        alert("Le JSON n'est pas un tableau valide.");
+      }
+    } catch (e) {
+      alert("Erreur: Le format JSON est invalide.");
+    }
+  };
+
   if (!isLoaded) return <div className="p-8"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
@@ -183,6 +284,9 @@ export function ConversationsClient() {
               <Download size={14} /> Exporter
             </button>
           </div>
+          <button onClick={() => setShowContextModal(true)} className="py-1.5 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-colors">
+            <FileText size={14} /> Contexte de l'histoire
+          </button>
           <button onClick={handleAddConversation} className="py-2 w-full bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
             <Plus size={16} /> Nouvelle
           </button>
@@ -294,12 +398,20 @@ export function ConversationsClient() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-bold text-slate-800">Dialogues ({selectedConv.dialogs.length})</h2>
-                  <button 
-                    onClick={addDialog}
-                    className="py-1.5 px-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                  >
-                    <Plus size={16} /> Ajouter une réplique
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={openAIModal}
+                      className="py-1.5 px-3 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Sparkles size={16} /> Générer avec l'IA
+                    </button>
+                    <button 
+                      onClick={addDialog}
+                      className="py-1.5 px-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Plus size={16} /> Ajouter une réplique
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -410,6 +522,85 @@ export function ConversationsClient() {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {showContextModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+              <h3 className="font-bold text-lg text-slate-800">Contexte & Paramètres de l'histoire</h3>
+              <button onClick={() => setShowContextModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+            </div>
+            <div className="p-4 flex-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Contexte global de l'histoire</label>
+              <textarea
+                value={storyContext}
+                onChange={(e) => setStoryContext(e.target.value)}
+                className="w-full h-64 p-3 bg-slate-50 border rounded-lg border-slate-200 outline-none focus:border-blue-500 focus:bg-white text-sm placeholder:text-slate-400 transition-colors resize-none"
+                placeholder="Exemple: Les personnages principaux s'appellent Tom et Ann. Ils sont dans un café à Bangkok..."
+              />
+            </div>
+            <div className="p-4 border-t border-slate-200 flex justify-between gap-3 bg-slate-50 rounded-b-xl">
+              <button onClick={exportContext} className="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors">
+                 <Download size={16} /> Exporter JSON
+              </button>
+              <button onClick={() => setShowContextModal(false)} className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors">
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAIModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-indigo-700">
+                <Sparkles size={20} />
+                Générateur IA de Conversation
+              </h3>
+              <button onClick={() => setShowAIModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+            </div>
+            <div className="p-4 flex-1 overflow-y-auto space-y-6">
+              <div>
+                 <div className="flex justify-between items-center mb-2">
+                   <label className="text-sm font-semibold text-slate-700">1. Copiez ce prompt et donnez-le à Gemini</label>
+                   <button onClick={copyPrompt} className="text-xs bg-slate-100 hover:bg-slate-200 py-1.5 px-3 rounded flex items-center gap-1.5 font-semibold text-slate-700 transition-colors">
+                     {copiedPrompt ? <Check size={14} className="text-green-600" /> : <Copy size={14} />} {copiedPrompt ? "Copié !" : "Copier"}
+                   </button>
+                 </div>
+                 <textarea
+                   readOnly
+                   value={aiPrompt}
+                   className="w-full h-64 bg-slate-50 p-3 border rounded-lg border-slate-200 outline-none font-mono text-[11px] text-slate-600 resize-none leading-relaxed"
+                 />
+              </div>
+              <div>
+                 <label className="text-sm font-semibold text-slate-700 mb-2 block">2. Collez la réponse JSON de Gemini ici</label>
+                 <textarea
+                   value={aiResponse}
+                   onChange={(e) => setAiResponse(e.target.value)}
+                   className="w-full h-48 p-3 bg-slate-50 border rounded-lg border-slate-200 outline-none focus:border-blue-500 focus:bg-white font-mono text-xs placeholder:text-slate-400 transition-colors resize-none"
+                   placeholder='[\n  {\n    "speaker": "A",\n    "th": "สวัสดีครับ",\n    ...\n  }\n]'
+                 />
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl">
+              <button onClick={() => setShowAIModal(false)} className="px-5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold transition-colors">
+                Annuler
+              </button>
+              <button 
+                onClick={applyAIResponse}
+                disabled={!aiResponse.trim()}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+              >
+                <Check size={16}/> Appliquer à la conversation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
