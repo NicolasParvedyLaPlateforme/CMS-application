@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Conversation, Dialog } from "@/types/course";
-import { Loader2, Save, Upload, Download, Plus, Trash2, Edit, GripVertical, FileText, Sparkles, X, Copy, Check } from "lucide-react";
+import { Loader2, Save, Upload, Download, Plus, Trash2, Edit, GripVertical, FileText, Sparkles, X, Copy, Check, Image as ImageIcon } from "lucide-react";
 
 export function ConversationsClient() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -23,6 +23,9 @@ export function ConversationsClient() {
   const [titleAIPrompt, setTitleAIPrompt] = useState("");
   const [titleAIResponse, setTitleAIResponse] = useState("");
   const [copiedTitlePrompt, setCopiedTitlePrompt] = useState(false);
+
+  const [excludeCharacters, setExcludeCharacters] = useState(false);
+  const [copiedImagePrompt, setCopiedImagePrompt] = useState(false);
 
   // Load from local storage
   useEffect(() => {
@@ -336,6 +339,34 @@ FORMAT ATTENDU :
     }
   };
 
+  const copyImagePrompt = () => {
+    if (!selectedConv) return;
+    
+    const thDialogs = selectedConv.dialogs.map(d => ({
+      speaker: d.speaker,
+      th: d.th
+    }));
+
+    const characterRule = excludeCharacters 
+      ? "IMPORTANT : Ne mets PAS les personnages principaux de l'histoire sur l'image."
+      : "IMPORTANT : Respecte à 100% l'apparence des personnages si tu décides de les mettre dans l'image.";
+
+    const prompt = `Génère une image créant un paysage ou un décor en lien avec cette conversation.
+
+Contexte global de l'histoire pour t'aider à créer l'image :
+${storyContext.trim() ? storyContext : "Aucun contexte global spécifié."}
+
+Voici la conversation en thaï sous format JSON :
+
+${JSON.stringify(thDialogs, null, 2)}
+
+${characterRule}`;
+
+    navigator.clipboard.writeText(prompt);
+    setCopiedImagePrompt(true);
+    setTimeout(() => setCopiedImagePrompt(false), 2000);
+  };
+
   if (!isLoaded) return <div className="p-8"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
@@ -402,7 +433,28 @@ FORMAT ATTENDU :
         <div className="p-6 max-w-4xl mx-auto h-full flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">Éditeur de Conversation</h1>
-            <div className="flex items-center gap-2 text-sm font-medium">
+            <div className="flex items-center gap-4 text-sm font-medium">
+              {selectedConv && (
+                <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <label className="text-xs text-slate-600 flex items-center gap-1.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={excludeCharacters} 
+                      onChange={e => setExcludeCharacters(e.target.checked)} 
+                      className="rounded border-slate-300" 
+                    />
+                    Sans personnages principaux
+                  </label>
+                  <div className="w-px h-4 bg-slate-200"></div>
+                  <button 
+                    onClick={copyImagePrompt} 
+                    className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    {copiedImagePrompt ? <Check size={14} className="text-green-600" /> : <ImageIcon size={14} />} 
+                    {copiedImagePrompt ? "Prompt Copié !" : "Prompt pour Image"}
+                  </button>
+                </div>
+              )}
               {saveStatus === 'saving' && <span className="text-slate-500 flex items-center gap-1"><Loader2 size={14} className="animate-spin" /> Sauvegarde...</span>}
               {saveStatus === 'saved' && <span className="text-green-600 flex items-center gap-1"><Save size={14} /> Sauvegardé</span>}
             </div>
