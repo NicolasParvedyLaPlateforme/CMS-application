@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, AlertTriangle, Download, Trash2, Save, Loader2, RefreshCcw, Type, FileText, Layers } from "lucide-react";
+import { LayoutDashboard, BookOpen, AlertTriangle, Download, Trash2, Save, Loader2, RefreshCcw, Type, FileText, Layers, Target } from "lucide-react";
 import { useCourse } from "@/contexts/CourseContext";
 import { useState } from "react";
 
@@ -49,6 +49,13 @@ export function Sidebar() {
         >
           <BookOpen size={18} className="mr-3" />
           Éditeur de Conversations
+        </Link>
+        <Link 
+          href="/quests" 
+          className={`px-5 py-3 text-sm flex items-center transition-colors ${pathname.startsWith('/quests') ? 'bg-blue-500 text-white' : 'hover:bg-slate-800'}`}
+        >
+          <Target size={18} className="mr-3" />
+          Éditeur de Quêtes
         </Link>
         
         <div className="mt-4 mb-2 px-5 text-xs font-semibold uppercase tracking-wider text-slate-400">
